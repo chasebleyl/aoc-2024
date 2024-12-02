@@ -1,0 +1,5 @@
+inputs/*/input.txt
+inputs/*/test.txt
+
+.venv/
+**__pycache__/
