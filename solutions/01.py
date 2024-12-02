@@ -23,7 +23,6 @@ def solve_part1(lines):
     for i, a in enumerate(column_a):
         result += abs(a - column_b[i])
     
-    # Your part 2 solution code here
     return result
 
 
@@ -45,7 +44,6 @@ def solve_part2(lines):
     for num, count in num_counts:
         result += num * count
     
-    # Your part 2 solution code here
     return result
 
 

@@ -7,11 +7,24 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-Create a new file in the `solutions` directory to solve a new puzzle. Create corresponding `input.txt` and `test.txt` files in the `inputs` directory, where the name of the subdirectory is the day number (i.e. `inputs/01/input.txt` and `inputs/01/test.txt`).
+## Creating New Solutions
 
-## Running
+Use the setup script to create the directory structure and files for a new day:
 
 ```bash
-python -m solutions.## --test # to run with test input
-python -m solutions.## # to run with real input
+python solve_day.py --day XX  # where XX is the day number (1-25)
 ```
+
+This will:
+
+- Create directory `inputs/XX` with empty `input.txt` and `test.txt` files
+- Copy the solution template from `solutions/00.py` to `solutions/XX.py`
+
+## Running Solutions
+
+```bash
+python -m solutions.XX --test  # to run with test input
+python -m solutions.XX        # to run with real input
+```
+
+where `XX` is the zero-padded day number (01-25)
