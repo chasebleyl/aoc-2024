@@ -13,12 +13,12 @@ pip install -r requirements.txt
 Use the setup script to create the directory structure and files for a new day:
 
 ```bash
-python solve_day.py --day XX  # where XX is the day number (1-25)
+python create_daily_assets.py --day XX  # where XX is the day number (1-25)
 ```
 
 This will:
 
-- Create directory `inputs/XX` with empty `input.txt` and `test.txt` files
+- Create empty `input.txt` and `test.txt` files within directory `inputs/XX`
 - Copy the solution template from `solutions/00.py` to `solutions/XX.py`
 
 ## Running Solutions
