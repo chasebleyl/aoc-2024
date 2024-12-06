@@ -83,12 +83,71 @@ def solve_part1(lines):
     
     return result
 
+def move_ints_after_index(numbers: list[int], index: int, movable_ints: list[int]) -> list[int]:
+    """
+    Reorders a list by moving specified integers that appear before the index to immediately after it.
+    
+    Args:
+        numbers: List of integers to reorder
+        index: Target index position
+        movable_ints: List of integers that should be moved if they appear before index
+        
+    Returns:
+        New list with movable integers repositioned after the index
+    """
+    # Create lists for numbers to move and numbers to keep
+    to_move = []
+    result = []
+    
+    # Collect numbers before index
+    for i in range(index + 1):
+        if i < len(numbers):
+            if numbers[i] in movable_ints:
+                to_move.append(numbers[i])
+            else:
+                result.append(numbers[i])
+    
+    # Add moved numbers after index
+    result.extend(to_move)
+    
+    # Add remaining numbers
+    if index + 1 < len(numbers):
+        result.extend(numbers[index + 1:])
+    
+    return result
 
 def solve_part2(lines):
     """Solve part 2 of the puzzle."""
     result = 0
     
-    # TODO: Solve this cause I failed miserably trying just now...
+    valid_updates = []
+    invalid_updates = []
+    
+    raw_rules, raw_updates = parse_rules_updates(lines)
+    
+    rules = Rules()
+    
+    for rule in raw_rules:
+        rules.upsert_rule(Rule.from_str(rule))
+        
+    for update in raw_updates:
+        page_updates = [int(page) for page in update.split(',')]
+        if is_valid_update(rules, page_updates):
+            valid_updates.append(page_updates)
+        else:
+            invalid_updates.append(page_updates)
+
+    for update in invalid_updates:
+        for i in range(len(update)):
+            rule = rules.rules.get(update[i])
+            if rule:
+                new_update = move_ints_after_index(update, i, list(rule.after_pages))
+                if is_valid_update(rules, new_update):
+                    valid_updates.append(new_update)
+                    break
+                else:
+                    # Update the current update list with the new update
+                    update = new_update
     
     return result
 
