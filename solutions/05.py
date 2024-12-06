@@ -30,8 +30,7 @@ class Rule:
     def is_before_any(self, page_numbers: list[int]) -> bool:
         """Check if the current rule's page number comes before any other rule's page numbers."""
         return any(self.is_before(page_number) for page_number in page_numbers)
-    
-    
+   
 class Rules:
     """A collection of rules."""
     def __init__(self, rules: dict[int, Rule] = {}):
@@ -116,6 +115,7 @@ def move_ints_after_index(numbers: list[int], index: int, movable_ints: list[int
     
     return result
 
+
 def solve_part2(lines):
     """Solve part 2 of the puzzle."""
     result = 0
@@ -138,16 +138,23 @@ def solve_part2(lines):
             invalid_updates.append(page_updates)
 
     for update in invalid_updates:
-        for i in range(len(update)):
+        i = 0
+        while i < len(update):
             rule = rules.rules.get(update[i])
             if rule:
+                # Count how many elements we'll move
+                moves_count = sum(1 for x in update[:i] if x in rule.after_pages)
                 new_update = move_ints_after_index(update, i, list(rule.after_pages))
+                
                 if is_valid_update(rules, new_update):
-                    valid_updates.append(new_update)
+                    result += get_middle_number(new_update)
                     break
                 else:
-                    # Update the current update list with the new update
                     update = new_update
+                    # Given we moved previous elements to after the current index,
+                    # we need to adjust the index accordingly
+                    i = max(0, i - moves_count)
+            i += 1
     
     return result
 
