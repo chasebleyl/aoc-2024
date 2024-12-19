@@ -67,7 +67,19 @@ class Node:
             return self.row + 1, self.column
         elif direction == ViewingCardinality.LEFT:
             return self.row, self.column - 1
-
+        
+    def get_cardinality_by_current_next_nodes(self, next_node: "Node") -> ViewingCardinality:
+        """Get the cardinality of the current node based on the next node."""
+        if next_node.row < self.row:
+            return ViewingCardinality.UP
+        elif next_node.row > self.row:
+            return ViewingCardinality.DOWN
+        elif next_node.column < self.column:
+            return ViewingCardinality.LEFT
+        elif next_node.column > self.column:
+            return ViewingCardinality.RIGHT
+        raise ValueError("Next node is not adjacent to the current node.")
+    
     @classmethod
     def get_starting_node(cls, grid: List[List["Node"]]) -> "Node":
         """Get the starting node from the grid."""
@@ -93,15 +105,17 @@ class Guard:
         self.current_cardinality = ViewingCardinality.UP
         self.current_node = starting_node
         self.is_on_map = True
-        self.visited_nodes: Set[Node] = set()
+        self.visited_nodes: List[Node] = []
+        self.unique_visited_nodes: Set[Node] = set()
 
     def __str__(self) -> str:
         """String representation of the guard."""
         return f"Guard({self.current_cardinality}, {self.current_node}, {self.is_on_map}, \n{self.visited_nodes})"
 
-    def move_directionally(self, grid: List[List[Node]]) -> "Guard":
+    def move_directionally(self, grid: List[List[Node]], starting_node: Node | None = None, starting_cardinality: ViewingCardinality | None = None) -> "Guard":
         """Move from the current node in the given direction until an obstacle is encountered."""
-        self.visited_nodes.add(self.current_node)
+        self.visited_nodes.append(self.current_node)
+        self.unique_visited_nodes.add(self.current_node)
         # If the next node is not in the grid, update is on map and return
         next_node_coordinates = self.current_node.get_next_node_coordinates(
             self.current_cardinality
@@ -118,6 +132,11 @@ class Guard:
             return self
         # Otherwise, keep moving
         self.current_node = next_node
+        if starting_node and starting_cardinality:
+            # If we looped back to the starting node with the same cardinality, we are in a loop, and should return self
+            if self.current_node == starting_node and self.current_cardinality == starting_cardinality:
+                return self
+        
         return self.move_directionally(grid)
 
     def rotate_current_cardinality(self) -> None:
@@ -125,7 +144,44 @@ class Guard:
         self.current_cardinality = ViewingCardinality(
             (self.current_cardinality.value % 4) + 1
         )
-
+        
+    def identify_possible_obstacles(self, grid: List[List[Node]]) -> Set[Node]:
+        """Identify where a single obstacle could be placed in front of a guard to force them into a loop."""
+        possible_obstacles: Set[Node] = set()
+        
+        while self.is_on_map:
+            self.move_directionally(grid)
+        
+        original_visited_nodes = self.visited_nodes.copy()
+        
+        print('Finished collecting visited nodes, and will now check for possible obstacles', self.visited_nodes)
+        
+        for index, node in enumerate(original_visited_nodes[:-1]):
+            self.visited_nodes = []
+            self.unique_visited_nodes = set()
+            
+            self.current_node = node
+            self.current_cardinality = node.get_cardinality_by_current_next_nodes(original_visited_nodes[index + 1])
+            
+            print('Checking if obstacle can be placed in front of the current node', node)
+            # Update the next node to be an obstacle 
+            original_next_node = original_visited_nodes[index + 1]
+            next_node_original_value = original_next_node.value
+            grid[original_next_node.row][original_next_node.column].value = NodeValue.OBSTACLE
+            
+            # Move the guard directionally to see if they can make it back to the starting node
+            guard = self.move_directionally(grid, starting_node=node, starting_cardinality=self.current_cardinality)
+            
+            # If the guard is still on the map then we discovered a loop, meaning the obstacle should be added to our set
+            if guard.is_on_map:
+                possible_obstacles.add(original_next_node)
+            
+            # Revert the next node to its original value 
+            grid[original_next_node.row][original_next_node.column].value = next_node_original_value
+            
+        return possible_obstacles
+            
+            
     @property
     def visited_nodes_count(self) -> int:
         """Get the number of unique visited nodes."""
@@ -152,8 +208,15 @@ def solve_part1(lines):
 def solve_part2(lines):
     """Solve part 2 of the puzzle."""
     result = 0
-    # Your part 2 solution code here
-    return result
+    
+    grid = Node.input_to_grid(lines)
+
+    starting_node = Node.get_starting_node(grid)
+    guard = Guard(starting_node)
+    
+    result = guard.identify_possible_obstacles(grid)
+    
+    return len(result)
 
 
 def main():
